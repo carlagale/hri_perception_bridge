@@ -20,4 +20,11 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+ament_index_register_resource("dnn_models.emotion_recognition")
+
+install(
+  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../hri_emotion_models/models/
+  DESTINATION share/hri_emotion_models/models
+)
+
 ament_package()
