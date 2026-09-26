@@ -75,7 +75,7 @@ def generate_launch_description():
         name='hri_emotion_recognizer',
         namespace='',
         parameters=[{
-            'emotion_model': model_path
+            'emotion_model': 'emotion-ferplus-8.onnx',
         }],
         output='screen'
     )

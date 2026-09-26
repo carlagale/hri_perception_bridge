@@ -12,6 +12,7 @@ find_package(rclcpp REQUIRED)
 install(DIRECTORY
   config
   launch
+  models
   DESTINATION share/${PROJECT_NAME}
 )
 
@@ -20,11 +21,7 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-ament_index_register_resource("dnn_models.emotion_recognition")
+ament_index_register_resource("dnn_models.emotion_recognition" CONTENT "models")
 
-install(
-  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../hri_emotion_models/models/
-  DESTINATION share/hri_emotion_models/models
-)
 
 ament_package()
