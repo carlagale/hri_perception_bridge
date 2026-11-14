@@ -10,11 +10,11 @@ from lifecycle_msgs.msg import Transition
 
 def generate_launch_description():
     bridge_share = get_package_share_directory('hri_perception_bridge')
-    yunet_share = get_package_share_directory('hri_face_detect_yunet')
+    face_share = get_package_share_directory('hri_face_detect')
     
     camera_info_path = os.path.join(bridge_share, 'config', 'camera_info.yaml')
-    model_path = 'emotion-ferplus-8.onnx'
-    # 1. Driver de la cámara (gscam)
+    
+    # 1. Driver de la camara (gscam)
     camera_node = Node(
         package='gscam',
         executable='gscam_node',
@@ -33,14 +33,18 @@ def generate_launch_description():
         ]
     )
 
-    # 2. Detector de Caras (YuNet Launch Nativo)
-    yunet_launch = IncludeLaunchDescription(
+    # 2. Detector de Caras (Launch nativo de hri_face_detect con remapping a camara)
+    face_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(yunet_share, 'launch', 'hri_face_detect_yunet.launch.py')
-        )
+            os.path.join(face_share, 'launch', 'face_detect.launch.py')
+        ),
+        launch_arguments={
+            'rgb_camera': 'camera',
+            'filtering_frame': 'camera'
+        }.items()
     )
 
-    # 3. Lifecycle Node para Detector de Cuerpos (MediaPipe)
+    # 3. Detector de Cuerpos (MediaPipe)
     body_node = LifecycleNode(
         package='hri_body_detect',
         executable='hri_body_detect',
@@ -68,7 +72,7 @@ def generate_launch_description():
         handle_once=True
     ))
 
-    # 4. Lifecycle Node para Reconocimiento de Emociones
+    # 4. Reconocedor de Emociones
     emotion_node = LifecycleNode(
         package='hri_emotion_recognizer',
         executable='hri_emotion_recognizer',
@@ -76,6 +80,7 @@ def generate_launch_description():
         namespace='',
         parameters=[{
             'emotion_model': 'emotion-ferplus-8.onnx',
+            'model': 'emotion-ferplus-8.onnx'
         }],
         output='screen'
     )
@@ -111,20 +116,21 @@ def generate_launch_description():
         output='screen'
     )
 
+    # 7. Transformada TF estatica (base_link -> camera)
     tf_base_to_camera = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         name='base_to_camera_tf',
         arguments=[
-            '0.0', '0.0', '1.0',         # x, y, z (a 1m de altura)
-            '-1.5708', '0.0', '-1.5708',  # yaw, pitch, roll (rotación óptica estándar)
+            '0.0', '0.0', '1.0',
+            '-1.5708', '0.0', '-1.5708',
             'base_link', 'camera'
         ]
     )
 
     return LaunchDescription([
         camera_node,
-        yunet_launch,
+        face_launch,
         body_node,
         body_configure,
         body_activate,

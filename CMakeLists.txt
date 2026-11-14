@@ -7,6 +7,28 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(trajectory_msgs REQUIRED)
+find_package(control_msgs REQUIRED)
+find_package(ament_index_cpp REQUIRED)
+find_package(yaml-cpp REQUIRED)
+
+add_executable(pose_tiago_node src/pose_tiago_node.cpp)
+ament_target_dependencies(pose_tiago_node
+  rclcpp
+  rclcpp_action
+  std_msgs
+  trajectory_msgs
+  control_msgs
+  ament_index_cpp
+)
+target_link_libraries(pose_tiago_node yaml-cpp)
+
+install(TARGETS
+  pose_tiago_node
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 # Instalar directorios en el espacio share para hacerlo portable
 install(DIRECTORY
@@ -21,7 +43,5 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-ament_index_register_resource("dnn_models.emotion_recognition" CONTENT "models")
-
-
+ament_index_register_resource("dnn_models.emotion_recognition" CONTENT "models/emotion-ferplus-8.onnx")
 ament_package()
