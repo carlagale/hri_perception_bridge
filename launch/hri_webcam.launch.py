@@ -8,19 +8,20 @@ from launch_ros.events.lifecycle import ChangeState
 from launch_ros.event_handlers import OnStateTransition
 from lifecycle_msgs.msg import Transition
 
+
 def generate_launch_description():
     bridge_share = get_package_share_directory('hri_perception_bridge')
     face_share = get_package_share_directory('hri_face_detect')
-    
+
     camera_info_path = os.path.join(bridge_share, 'config', 'camera_info.yaml')
-    
+
     # 1. Driver de la camara (gscam)
     camera_node = Node(
         package='gscam',
         executable='gscam_node',
         name='gscam_publisher',
         parameters=[{
-            'gscam_config': 'v4l2src device=/dev/video0 ! video/x-raw,framerate=30/1 ! videoconvert',
+            'gscam_config': 'v4l2src device=/dev/video2 ! video/x-raw,framerate=30/1 ! videoconvert',
             'use_sensor_data_qos': True,
             'camera_name': 'camera',
             'frame_id': 'camera',
@@ -100,15 +101,79 @@ def generate_launch_description():
         handle_once=True
     ))
 
-    # 5. Gestor de Personas HRI
-    person_manager_node = Node(
-        package='hri_person_manager',
-        executable='hri_person_manager',
-        name='hri_person_manager',
+    # 5. Emparejador 2D Cara-Cuerpo (LifecycleNode)
+    face_body_matcher_node = LifecycleNode(
+        package='hri_face_body_matcher',
+        executable='hri_face_body_matcher',
+        name='hri_face_body_matcher',
+        namespace='',
         output='screen'
     )
 
-    # 6. Visualizador RViz2
+    face_body_matcher_configure = EmitEvent(event=ChangeState(
+        lifecycle_node_matcher=lambda n: n == face_body_matcher_node,
+        transition_id=Transition.TRANSITION_CONFIGURE
+    ))
+
+    face_body_matcher_activate = RegisterEventHandler(OnStateTransition(
+        target_lifecycle_node=face_body_matcher_node,
+        goal_state='inactive',
+        entities=[EmitEvent(event=ChangeState(
+            lifecycle_node_matcher=lambda n: n == face_body_matcher_node,
+            transition_id=Transition.TRANSITION_ACTIVATE
+        ))],
+        handle_once=True
+    ))
+
+    # 6. Gestor de Personas HRI (LifecycleNode)
+    person_manager_node = LifecycleNode(
+        package='hri_person_manager',
+        executable='hri_person_manager',
+        name='hri_person_manager',
+        namespace='',
+        output='screen'
+    )
+
+    person_manager_configure = EmitEvent(event=ChangeState(
+        lifecycle_node_matcher=lambda n: n == person_manager_node,
+        transition_id=Transition.TRANSITION_CONFIGURE
+    ))
+
+    person_manager_activate = RegisterEventHandler(OnStateTransition(
+        target_lifecycle_node=person_manager_node,
+        goal_state='inactive',
+        entities=[EmitEvent(event=ChangeState(
+            lifecycle_node_matcher=lambda n: n == person_manager_node,
+            transition_id=Transition.TRANSITION_ACTIVATE
+        ))],
+        handle_once=True
+    ))
+
+    # 7. Estimador de Atencion / Engagement (LifecycleNode)
+    engagement_node = LifecycleNode(
+        package='hri_engagement',
+        executable='engagement',
+        name='hri_engagement',
+        namespace='',
+        output='screen'
+    )
+
+    engagement_configure = EmitEvent(event=ChangeState(
+        lifecycle_node_matcher=lambda n: n == engagement_node,
+        transition_id=Transition.TRANSITION_CONFIGURE
+    ))
+
+    engagement_activate = RegisterEventHandler(OnStateTransition(
+        target_lifecycle_node=engagement_node,
+        goal_state='inactive',
+        entities=[EmitEvent(event=ChangeState(
+            lifecycle_node_matcher=lambda n: n == engagement_node,
+            transition_id=Transition.TRANSITION_ACTIVATE
+        ))],
+        handle_once=True
+    ))
+
+    # 8. Visualizador RViz2
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -116,7 +181,7 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 7. Transformada TF estatica (base_link -> camera)
+    # 9. Transformada TF estatica (base_link -> camera)
     tf_base_to_camera = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -137,7 +202,15 @@ def generate_launch_description():
         emotion_node,
         emotion_configure,
         emotion_activate,
+        face_body_matcher_node,
+        face_body_matcher_configure,
+        face_body_matcher_activate,
         person_manager_node,
+        person_manager_configure,
+        person_manager_activate,
+        engagement_node,
+        engagement_configure,
+        engagement_activate,
         rviz_node,
         tf_base_to_camera
     ])
