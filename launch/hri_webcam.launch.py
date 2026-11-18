@@ -21,7 +21,7 @@ def generate_launch_description():
         executable='gscam_node',
         name='gscam_publisher',
         parameters=[{
-            'gscam_config': 'v4l2src device=/dev/video2 ! video/x-raw,framerate=30/1 ! videoconvert',
+            'gscam_config': 'v4l2src device=/dev/video0 ! video/x-raw,framerate=30/1 ! videoconvert',
             'use_sensor_data_qos': True,
             'camera_name': 'camera',
             'frame_id': 'camera',

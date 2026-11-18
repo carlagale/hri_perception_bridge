@@ -16,6 +16,9 @@
   <depend>control_msgs</depend>
   <depend>ament_index_cpp</depend>
   <depend>yaml-cpp</depend>
+  <depend>hri</depend>
+  <depend>hri_msgs</depend>
+
   
   <exec_depend>v4l2_camera</exec_depend>
   <exec_depend>hri_face_detect_yunet</exec_depend>

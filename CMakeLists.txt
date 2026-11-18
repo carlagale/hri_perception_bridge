@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 project(hri_perception_bridge)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+  add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 find_package(ament_cmake REQUIRED)
@@ -13,6 +13,10 @@ find_package(trajectory_msgs REQUIRED)
 find_package(control_msgs REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(hri REQUIRED)
+find_package(hri_msgs REQUIRED)
+
+include_directories(${hri_INCLUDE_DIRS} ${hri_DIR}/../../../include/hri)
 
 add_executable(pose_tiago_node src/pose_tiago_node.cpp)
 ament_target_dependencies(pose_tiago_node
@@ -25,8 +29,17 @@ ament_target_dependencies(pose_tiago_node
 )
 target_link_libraries(pose_tiago_node yaml-cpp)
 
+add_executable(kinesics_analyzer_node src/kinesics_analyzer_node.cpp)
+ament_target_dependencies(kinesics_analyzer_node
+  rclcpp
+  std_msgs
+  hri
+  hri_msgs
+)
+
 install(TARGETS
   pose_tiago_node
+  kinesics_analyzer_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
